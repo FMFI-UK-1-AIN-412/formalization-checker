@@ -52,9 +52,9 @@ const getMessage = (evaluation) => {
       || evaluation.formalizationToSolution === 'ME') {
         return (
           <Alert variant="warning">
-           <p> Dokazovaču sa nepodarilo zistiť,
+           <p>Nepodarilo sa automaticky zistiť,
             či je vaše riešenie správne alebo nesprávne.
-               Na správnosť vášho riešenia sa spýtajte.</p>
+            Poraďte sa s vyučujúcimi.</p>
           </Alert>
         );
   } else {
@@ -74,28 +74,24 @@ const getMessage = (evaluation) => {
               return (
                   <Alert variant="danger">
                       <b>Riešenie je nesprávne.</b>
-                      <p>Vieme nájsť konkrétnu štruktúru,
-                          v ktorej je hľadaná správna formalizácia pravdivá,
+                      <p>Existuje štruktúra,
+                          v ktorej je hľadaná správna formalizácia pravdivá,
                           ale vaša formalizácia je nepravdivá.</p>
-
                       <p>{evaluation.m1}</p>
                       <p>{domainFormToSol}</p>
+                      <ul className="unstyled">
                       {symbolsFormToSol.split("\n").map((i,key) => {
-                          return <div className="p" key={key}>{i}</div>;
+                          return <li key={key}>{i}</li>;
                       })}
-
-
-                      <br/>
-
-
+                      </ul>
                   </Alert>
               );
           } else {
               return (
                   <Alert variant="danger">
                       <b>Riešenie je nesprávne.</b>
-                      <p>Nepodarilo sa nájsť štruktúru, na vaše riešenie sa radšej opýtajte.</p>
-
+                      <p>Nepodarilo sa však automaticky nájsť kontrapríklad.
+                          Ak neviete nájsť chybu, poraďte sa s vyučujúcimi.</p>
                   </Alert>
               );
           }
@@ -105,22 +101,24 @@ const getMessage = (evaluation) => {
               return (
                   <Alert variant="danger">
                       <b>Riešenie je nesprávne.</b>
-                      <p>Vieme nájsť konkrétnu štruktúru,
-                          v ktorej je vaša formalizácia pravdivá,
+                      <p>Existuje štruktúra,
+                          v ktorej je vaša formalizácia pravdivá,
                           ale hľadaná správna formalizácia je nepravdivá.</p>
                       <p>{evaluation.m2}</p>
                       <p>{domainSolToForm}</p>
+                      <ul className="unstyled">
                       {symbolsSolToForm.split("\n").map((i,key) => {
-                          return <div className="p" key={key}>{i}</div>;
+                          return <li key={key}>{i}</li>;
                       })}
-
+                      </ul>
                   </Alert>
               );
           } else {
               return (
                   <Alert variant="danger">
                       <b>Riešenie je nesprávne.</b>
-                      <p>Nepodarilo sa nájsť štruktúru, na vaše riešenie sa radšej opýtajte.</p>
+                      <p>Nepodarilo sa však automaticky nájsť kontrapríklad.
+                          Ak neviete nájsť chybu, poraďte sa s vyučujúcimi.</p>
                   </Alert>
               );
           }
@@ -128,24 +126,23 @@ const getMessage = (evaluation) => {
           return (
               <Alert variant="danger">
                   <b>Riešenie je nesprávne.</b>
-                  <p>Vieme nájsť konkrétne štruktúry,
-                      v ktorých je vaša formalizácia pravdivá,
-                      ale hľadaná správna formalizácia je nepravdivá, a naopak.</p>
-
+                  <p>Existujú štruktúry,
+                      v ktorých je vaša formalizácia pravdivá,
+                      ale hľadaná správna formalizácia je nepravdivá, a naopak.</p>
                   <p>{evaluation.m2}</p>
                   <p>{domainSolToForm}</p>
-                  {symbolsSolToForm.split("\n").map((i,key) => {
-                      return <div className="p" key={key}>{i}</div>;
-                  })}
-
-
+                  <ul className="unstyled">
+                  {symbolsSolToForm.split("\n").map((i,key) =>
+                    <div className="p" key={key}>{i}</div>
+                  )}
+                  </ul>
                   <p>{evaluation.m1}</p>
                   <p>{domainFormToSol}</p>
-                  {symbolsFormToSol.split("\n").map((i,key) => {
-                      return <div className="p" key={key}>{i}</div>;
-                  })}
-
-
+                  <ul className="unstyled">
+                  {symbolsFormToSol.split("\n").map((i,key) =>
+                    <li key={key}>{i}</li>
+                  )}
+                  </ul>
               </Alert>
           );
       }

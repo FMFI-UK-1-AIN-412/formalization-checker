@@ -101,7 +101,7 @@ export const parseFormalization = (input, constants, predicates, functions, pars
 }
 
 export function getStringDomainAndPredicates(symbols, constants, language){
-  let d = "𝒟 = {";
+  let d = "𝐷 = {";
   let i = "";
   let poc = 0;
   if(symbols === ''){
