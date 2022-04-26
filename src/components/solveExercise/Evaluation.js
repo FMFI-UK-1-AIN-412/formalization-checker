@@ -38,6 +38,16 @@ const mapStateToProps = (state, ownProps) => {
 
 export default connect(mapStateToProps)(Evaluation);
 
+const renderStructure = (evaluation, domain, symbols) =>
+  <>
+    <p>{evaluation}</p>
+    <p>{domain}</p>
+    <ul className="list-unstyled">
+    {symbols.split("\n").filter(i => i.trim() !== "").map((i,key) => {
+        return <li key={key}>{i}</li>;
+    })}
+    </ul>
+  </>
 
 const getMessage = (evaluation) => {
   if (evaluation.solutionToFormalization === 'OK'
@@ -77,13 +87,8 @@ const getMessage = (evaluation) => {
                       <p>Existuje štruktúra,
                           v ktorej je hľadaná správna formalizácia pravdivá,
                           ale vaša formalizácia je nepravdivá.</p>
-                      <p>{evaluation.m1}</p>
-                      <p>{domainFormToSol}</p>
-                      <ul className="unstyled">
-                      {symbolsFormToSol.split("\n").map((i,key) => {
-                          return <li key={key}>{i}</li>;
-                      })}
-                      </ul>
+                      { renderStructure(evaluation.m1, domainFormToSol,
+                          symbolsFormToSol) }
                   </Alert>
               );
           } else {
@@ -104,13 +109,8 @@ const getMessage = (evaluation) => {
                       <p>Existuje štruktúra,
                           v ktorej je vaša formalizácia pravdivá,
                           ale hľadaná správna formalizácia je nepravdivá.</p>
-                      <p>{evaluation.m2}</p>
-                      <p>{domainSolToForm}</p>
-                      <ul className="unstyled">
-                      {symbolsSolToForm.split("\n").map((i,key) => {
-                          return <li key={key}>{i}</li>;
-                      })}
-                      </ul>
+                      { renderStructure(evaluation.m2, domainSolToForm,
+                          symbolsSolToForm) }
                   </Alert>
               );
           } else {
@@ -129,20 +129,10 @@ const getMessage = (evaluation) => {
                   <p>Existujú štruktúry,
                       v ktorých je vaša formalizácia pravdivá,
                       ale hľadaná správna formalizácia je nepravdivá, a naopak.</p>
-                  <p>{evaluation.m2}</p>
-                  <p>{domainSolToForm}</p>
-                  <ul className="unstyled">
-                  {symbolsSolToForm.split("\n").map((i,key) =>
-                    <div className="p" key={key}>{i}</div>
-                  )}
-                  </ul>
-                  <p>{evaluation.m1}</p>
-                  <p>{domainFormToSol}</p>
-                  <ul className="unstyled">
-                  {symbolsFormToSol.split("\n").map((i,key) =>
-                    <li key={key}>{i}</li>
-                  )}
-                  </ul>
+                  { renderStructure(evaluation.m2, domainSolToForm,
+                      symbolsSolToForm) }
+                  { renderStructure(evaluation.m1, domainFormToSol,
+                      symbolsFormToSol) }
               </Alert>
           );
       }
