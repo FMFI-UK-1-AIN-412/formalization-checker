@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/formalization-checker/static/css/main.b7de0216.chunk.css",
-    "main.js": "/formalization-checker/static/js/main.3c62fe29.chunk.js",
-    "main.js.map": "/formalization-checker/static/js/main.3c62fe29.chunk.js.map",
+    "main.js": "/formalization-checker/static/js/main.a33fcfec.chunk.js",
+    "main.js.map": "/formalization-checker/static/js/main.a33fcfec.chunk.js.map",
     "runtime-main.js": "/formalization-checker/static/js/runtime-main.4ff20a1a.js",
     "runtime-main.js.map": "/formalization-checker/static/js/runtime-main.4ff20a1a.js.map",
     "static/css/2.3661fc73.chunk.css": "/formalization-checker/static/css/2.3661fc73.chunk.css",
     "static/js/2.b01dbf47.chunk.js": "/formalization-checker/static/js/2.b01dbf47.chunk.js",
     "static/js/2.b01dbf47.chunk.js.map": "/formalization-checker/static/js/2.b01dbf47.chunk.js.map",
     "index.html": "/formalization-checker/index.html",
-    "precache-manifest.9a4a7142633aae9fb4abfb97eb3327ad.js": "/formalization-checker/precache-manifest.9a4a7142633aae9fb4abfb97eb3327ad.js",
+    "precache-manifest.7733612cd04e3d2465456d3cf4844509.js": "/formalization-checker/precache-manifest.7733612cd04e3d2465456d3cf4844509.js",
     "service-worker.js": "/formalization-checker/service-worker.js",
     "static/css/2.3661fc73.chunk.css.map": "/formalization-checker/static/css/2.3661fc73.chunk.css.map",
     "static/css/main.b7de0216.chunk.css.map": "/formalization-checker/static/css/main.b7de0216.chunk.css.map",
@@ -20,6 +20,6 @@
     "static/css/2.3661fc73.chunk.css",
     "static/js/2.b01dbf47.chunk.js",
     "static/css/main.b7de0216.chunk.css",
-    "static/js/main.3c62fe29.chunk.js"
+    "static/js/main.a33fcfec.chunk.js"
   ]
 }
