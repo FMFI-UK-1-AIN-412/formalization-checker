@@ -66,8 +66,10 @@ function LoginForm({
         >
           Log in
         </Button>
+        <span className="mx-4">or</span>
         <Button
           type="submit"
+          variant="dark"
           onClick={(e) => {
             e.preventDefault();
               let url = "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID + "&redirect_uri=" + REDIRECT +"&scope=read:user"
