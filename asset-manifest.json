@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/formalization-checker/static/css/main.636b17c6.chunk.css",
+    "main.js": "/formalization-checker/static/js/main.68526a83.chunk.js",
+    "main.js.map": "/formalization-checker/static/js/main.68526a83.chunk.js.map",
+    "runtime-main.js": "/formalization-checker/static/js/runtime-main.8401f60a.js",
+    "runtime-main.js.map": "/formalization-checker/static/js/runtime-main.8401f60a.js.map",
+    "static/css/2.3661fc73.chunk.css": "/formalization-checker/static/css/2.3661fc73.chunk.css",
+    "static/js/2.d5e9a43b.chunk.js": "/formalization-checker/static/js/2.d5e9a43b.chunk.js",
+    "static/js/2.d5e9a43b.chunk.js.map": "/formalization-checker/static/js/2.d5e9a43b.chunk.js.map",
+    "index.html": "/formalization-checker/index.html",
+    "precache-manifest.6fcdbf7d201c8d354c840bb9ec61e4b4.js": "/formalization-checker/precache-manifest.6fcdbf7d201c8d354c840bb9ec61e4b4.js",
+    "service-worker.js": "/formalization-checker/service-worker.js",
+    "static/css/2.3661fc73.chunk.css.map": "/formalization-checker/static/css/2.3661fc73.chunk.css.map",
+    "static/css/main.636b17c6.chunk.css.map": "/formalization-checker/static/css/main.636b17c6.chunk.css.map",
+    "static/js/2.d5e9a43b.chunk.js.LICENSE.txt": "/formalization-checker/static/js/2.d5e9a43b.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.8401f60a.js",
+    "static/css/2.3661fc73.chunk.css",
+    "static/js/2.d5e9a43b.chunk.js",
+    "static/css/main.636b17c6.chunk.css",
+    "static/js/main.68526a83.chunk.js"
+  ]
+}
