@@ -7,10 +7,8 @@ import {
     fetchActiveFeedbacks,
     feedbackRating, selectEvaluation, selectFeedbacks
 } from '../../redux/solveExerciseSlice';
-import {
-    makeStructure
-} from '../../redux/helpers';
 import Feedback from "./Feedback";
+import styles from "./Evaluation.module.css";
 
 function Evaluation({ proposition_id, evaluation, feedbacks, fetchFeedbacks, feedbackRating, status, error }) {
     const [index, setIndex] = useState(-1);
@@ -38,7 +36,7 @@ function Evaluation({ proposition_id, evaluation, feedbacks, fetchFeedbacks, fee
     if (status === 'failed') {
         return (
             <ErrorEvalResult>
-                { error }
+                { ` ${error}` }
             </ErrorEvalResult>
         );
     }
@@ -84,6 +82,27 @@ const FailedEvalResult = () =>
         <strong>
             We were unable to automatically validate your formalization.
         </strong>
+        The evaluation has timed out or used too much memory.
+        Your formalization is likely incorrect.
+        {msgDiscuss}
+    </EvalResult>
+
+const UnknownEvaluationResult = () =>
+    <EvalResult type="warning">
+        <strong>
+            The evaluation server returned an unknown result.
+        </strong>
+        You may be using an older version of this interface.
+        Try reloading the page.
+        If the problem persists or occurs with other formulas,
+        contact the teachers.
+    </EvalResult>
+
+const FailedStructureResult = () =>
+    <EvalResult type="danger">
+        <strong>
+            Your formalization is incorrect, but we were unable to automatically find a structure.
+        </strong>
         {msgDiscuss}
     </EvalResult>
 
@@ -123,9 +142,9 @@ const viewSetValue = (tuples) => (
     }}`
 );
 
-const Structure = ({ subscript, D, iC, iP, iF }) => (<>
+const Structure = ({ subscript, domain, iC, iP, iF }) => (<>
     <p className="mb-1">
-        𝐷{subscript}{` = {${D.join(", ")}}`}
+        𝐷{subscript}{` = {${domain.join(", ")}}`}
     </p>
     <Interpretation
         interpFunc={iC}
@@ -144,37 +163,255 @@ const Structure = ({ subscript, D, iC, iP, iF }) => (<>
     />
 </>)
 
-const Counterexample = ({structure, description, index, msgNotFound}) => {
-    const subscript = index ? <sub>{index}</sub> : null;
+const CollapsibleStructure = ({ subscript, structure }) => (
+    <details className="mt-2">
+        <summary className="mb-2">Structure ℳ{subscript}</summary>
+        <Structure subscript={subscript} {...structure} />
+    </details>
+);
+
+const Traces = ({ traces }) => {
+    if (!traces) return null;
     return (
-        structure
-        ? <div className="mb-2">
+        <div>
+            {traces}
+        </div>
+    );
+};
+
+
+const Counterexample = ({ structure, description, index, msgNotFound, traceData, antecedentLabel, consequentLabel }) => {
+    if (!structure || !traceData) {
+        return (
+            <p className="mb-2">
+                {msgNotFound ?? "We could not find a counterexample automatically."}
+                {msgDiscuss}
+            </p>
+        );
+    }
+
+    const subscript = index ? <sub>{index}</sub> : null;
+    const traces = makeTraces(traceData, structure.structureConstants, antecedentLabel, consequentLabel);
+
+    return traces ? (
+        <div className="mb-2">
             <p className="mb-1">
                 {description}{" "}
-                ℳ{subscript} = (𝐷{subscript}, 𝑖{subscript}) where:
+                ℳ{subscript} = (𝐷{subscript}, 𝑖{subscript}):
             </p>
-            <Structure subscript={subscript} {...structure}/>
+            <Traces 
+                traces={traces} 
+                />
+            <CollapsibleStructure
+                subscript={subscript}
+                structure={structure}
+            />
         </div>
-        : <p className="mb-2">
-            { msgNotFound ??
-                'We could not find a counterexample automatically.'
-            }
+    ) : (
+        <p className="mb-2">
+            {msgNotFound ?? "We could not find a counterexample automatically."}
             {msgDiscuss}
         </p>
     );
-}
+};
+
+const getLanguageDifferences = (languageDiff) => {
+    const nonEmptyDifferences = Object.entries(languageDiff)
+        .map(([key, { missing, extra }]) => {
+            const differenceParts = [];
+
+            if (missing.length > 0) {
+                differenceParts.push(
+                    <li key={`${key}-missing`}>
+                        <strong>{key.charAt(0).toUpperCase() + key.slice(1)} missing:</strong> {missing.join(", ")}
+                    </li>
+                );
+            }
+
+            if (extra.length > 0) {
+                differenceParts.push(
+                    <li key={`${key}-extra`}>
+                        <strong>Extra {key.slice(0)}:</strong> {extra.join(", ")}
+                    </li>
+                );
+            }
+
+            return differenceParts.length > 0 ? differenceParts : null;
+        })
+        .flat();
+
+    return nonEmptyDifferences.length > 0 ? <ul>{nonEmptyDifferences}</ul> : <p>No missing or extra symbols found.</p>;
+};
+
+const renderEvaluation = (structureConstants, evalObj, seenEvaluations = new Set()) => {
+    const evaluationString = JSON.stringify(evalObj);
+
+    if (seenEvaluations.has(evaluationString)) {
+        return;
+    }
+    seenEvaluations.add(evaluationString);
+
+    switch (evalObj.kind) {
+        case "quant":
+        case "universalQuant":
+        case "existentialQuant":
+            return (
+                <div className={styles.quantBlock}>
+                    {evalObj.args.map((arg, index) => (
+                        <div key={index} className={styles.connectiveBlock}>
+                            {renderEvaluation(structureConstants, arg, seenEvaluations)}
+                        </div>
+                    ))}
+                </div>
+            );
+        
+        case "connective":
+        case "conjunction":
+        case "disjunction":
+        case "implication":
+        case "equivalence":
+        case "negation":
+            return (
+                <span className={styles.connectiveInline}>
+                    {evalObj.args.map((arg, index) => (
+                        <React.Fragment key={index}>
+                            {index > 0 && " ∧ "}
+                            {renderEvaluation(structureConstants, arg)}
+                        </React.Fragment>
+                    ))}
+                </span>
+            );
+            
+        case "equality":
+            const left = renderEvaluation(structureConstants, evalObj.args[0], seenEvaluations);
+            const right = renderEvaluation(structureConstants, evalObj.args[1], seenEvaluations);
+
+            let equalityString = evalObj.args[0].kind === "constant" ? `${evalObj.args[0].symbol}` : `${structureConstants[evalObj.args[0].result - 1]}`;
+            equalityString += ` ${evalObj.result ? "=" : "≠"} `;
+            equalityString += "" + evalObj.args[1].kind === "constant" ? `${evalObj.args[1].symbol}` : `${structureConstants[evalObj.args[1].result - 1]}`;
+
+            return  <span>
+                        {left}{left && " ∧ "}{right}{right && " ∧ "}{equalityString}
+                    </span>;
+
+        case "predicate":
+            let predicateFunc;
+            const predicateString = `${evalObj.symbol}(${evalObj.args.map(arg => {
+                    if (arg.kind === "functionApplication") {
+                        predicateFunc = <span>{predicateFunc} {renderEvaluation(structureConstants, arg, seenEvaluations)} ∧ </span>;
+                    }
+                    return (arg.kind === "variable" || arg.kind === "functionApplication")
+                        ? structureConstants[arg.result - 1] 
+                        : arg.symbol;
+                }).join(", ")})`;
+            
+            return  <span>
+                        {predicateFunc} {evalObj.result ? predicateString : `¬${predicateString}`}
+                    </span>;
+        
+        case "functionApplication":
+            let functionFunc;
+            const functionString = `${evalObj.symbol}(${evalObj.args.map(arg => {
+                if (arg.kind === "functionApplication") {
+                    functionFunc = <span>{functionFunc} {renderEvaluation(structureConstants, arg, seenEvaluations)} ∧ </span>;
+                }
+                return (arg.kind === "variable" || arg.kind === "functionApplication")
+                    ? structureConstants[arg.result - 1] 
+                    : arg.symbol;
+            }).join(", ")}) = ${structureConstants[evalObj.result - 1]}`;
+            
+            return  <span>
+                        {functionFunc} {functionString}
+                    </span>;
+
+        case "variable":
+        case "constant":
+            return  null;
+
+        default:
+            return null;
+    }
+};
+
+const makeTraces = (traces, structureConstants, antecedentLabel = 'Antecedent', consequentLabel = 'Consequent') => {
+    if (!traces?.antecedent || !traces?.consequent || !structureConstants) return;
+
+    const fmbValues = structureConstants.filter(item => item.startsWith("$"));
+
+    let tracePrologue = `∀x ( ${structureConstants.map(value => `x = ${value} `).join(" ∨ ")} )`;
+    if (fmbValues.length > 0) {
+        tracePrologue = `${fmbValues.map(fmb => `∃${fmb}`).join(" ")}: ${tracePrologue} `;
+    }
+
+    const inequalities = [];
+    const minInequalities = Math.min(structureConstants.length, 3);
+    for (let i = 0; i < minInequalities; i++) {
+        for (let j = i + 1; j < minInequalities; j++) {
+            inequalities.push(`${structureConstants[i]} ≠ ${structureConstants[j]}`);
+        }
+    }
+    if (inequalities.length > 0) {
+        tracePrologue += ` ∧ ( ${inequalities.join(" ∧ ")} ${structureConstants.length > 3 ? "∧ ..." : ""} ):`;
+    }
+
+    return (
+        <ul>
+            <li>
+                <details className="mb-3" open>
+                    <summary><b>{antecedentLabel}</b> formalization is <b>{traces.antecedent.result.toString()}</b> because</summary>
+                    <div>
+                        <p className="mb-0">{tracePrologue}</p>
+                        <div className={styles.studentTrace}>
+                            {renderEvaluation(structureConstants, traces.antecedent)}
+                        </div>
+                    </div>
+                </details>
+            </li>
+            <li>
+                <details className="mb-3" open>
+                    <summary><b>{consequentLabel}</b> formalization is <b>{traces.consequent.result.toString()}</b> because</summary>
+                    <div>
+                        <p className="mb-0">{tracePrologue}</p>
+                        <div className={styles.solutionTrace}>
+                            {renderEvaluation(structureConstants, traces.consequent)}
+                        </div>
+                    </div>
+                </details>
+            </li>
+        </ul>
+    );
+};
+
 
 const viewEvalResult = (evaluation) => {
-    if (evaluation.solutionToFormalization === 'OK'
-        && evaluation.formalizationToSolution === 'OK') {
+    if ( !evaluation.inputImpliesCorrect || !evaluation.correctImpliesInput ) {
+        return <UnknownEvaluationResult />;
+    }
+
+    if (evaluation.inputImpliesCorrect.result === "missingOrExtraSymbols" &&
+        evaluation.correctImpliesInput.result === "missingOrExtraSymbols") {
+        return (
+            <IncorrectEvalResult summary="Your formalization is incorrect due to missing or extra symbols.">
+                {getLanguageDifferences(evaluation.languageDiff)}
+            </IncorrectEvalResult>
+        );
+    }
+
+    if (evaluation.inputImpliesCorrect.result === 'OK'
+        && evaluation.correctImpliesInput.result === 'OK') {
         return <CorrectEvalResult />;
     }
 
-    if (evaluation.solutionToFormalization === 'TE'
-        || evaluation.formalizationToSolution === 'TE'
-        || evaluation.solutionToFormalization === 'ME'
-        || evaluation.formalizationToSolution === 'ME') {
+    if (evaluation.inputImpliesCorrect.result === 'TE'
+        || evaluation.correctImpliesInput.result === 'TE'
+        || evaluation.inputImpliesCorrect.result === 'ML'
+        || evaluation.correctImpliesInput.result === 'ML') {
         return <FailedEvalResult />;
+    }
+
+    if ( (evaluation.inputImpliesCorrect.result !== 'OK' && evaluation.inputImpliesCorrect.result !== 'WA') ||
+        (evaluation.correctImpliesInput.result !== 'OK' && evaluation.correctImpliesInput.result !== 'WA') ) {
+            return <UnknownEvaluationResult />;
     }
 
     // FIXME: evaluation.languageConstants is sometimes empty
@@ -183,26 +420,11 @@ const viewEvalResult = (evaluation) => {
     // FIXME: 1.5.1. Peter je muž. A = E.
     // No counterexample in one direction, in the other direction:
     // got i(muz) = {}; should get: i(muz) = {i(Peter)}
-    const C_L = new Set(evaluation.languageContants);
+    // const C_L = new Set(evaluation.languageContants);
     // TODO: Fix backend to return a pair of objects similar to these
-    const correctImpliesInput = {
-        result: evaluation.formalizationToSolution,
-        description: evaluation.m1,
-        counterexample: makeStructure(
-            evaluation.domainFormalizationToSolution,
-            evaluation.symbolsFormalizationToSolution,
-            C_L
-        )
-    }
-    const inputImpliesCorrect = {
-        result: evaluation.solutionToFormalization,
-        description: evaluation.m2,
-        counterexample: makeStructure(
-            evaluation.domainSolutionToFormalization,
-            evaluation.symbolsSolutionToFormalization,
-            C_L
-        )
-    }
+
+    const correctImpliesInput = evaluation.correctImpliesInput;
+    const inputImpliesCorrect = evaluation.inputImpliesCorrect;
 
     if (inputImpliesCorrect.result === 'OK'
         && correctImpliesInput.result === 'WA') {
@@ -212,10 +434,17 @@ const viewEvalResult = (evaluation) => {
                 in some first-order structure
                 where the correct formalization is true.`
             }>
-                <Counterexample
-                    description="One such structure is"
-                    structure={correctImpliesInput.counterexample}
-                />
+                {
+                    (correctImpliesInput.counterexample && !correctImpliesInput.counterexample.error)
+                    ? <Counterexample
+                        description="In such structure"
+                        structure={correctImpliesInput.counterexample}
+                        traceData={correctImpliesInput.traces}
+                        antecedentLabel={'The correct'}
+                        consequentLabel={'Your'}
+                        />
+                    : <FailedStructureResult error={correctImpliesInput.counterexample?.error} />
+                }
             </IncorrectEvalResult>
         );
     }
@@ -228,10 +457,17 @@ const viewEvalResult = (evaluation) => {
                 in some first-order structure
                 where the correct formalization is false.`
             }>
-                <Counterexample
-                    description="One such structure is"
-                    structure={inputImpliesCorrect.counterexample}
-                />
+                {
+                    (inputImpliesCorrect.counterexample && !inputImpliesCorrect.counterexample.error)
+                    ? <Counterexample
+                        description="In such structure"
+                        structure={inputImpliesCorrect.counterexample}
+                        traceData={inputImpliesCorrect.traces}
+                        antecedentLabel={'Your'}
+                        consequentLabel={'The correct'}
+                        />
+                    : <FailedStructureResult error={inputImpliesCorrect.counterexample?.error} />
+                }
             </IncorrectEvalResult>
         );
     }
@@ -243,26 +479,36 @@ const viewEvalResult = (evaluation) => {
                 where the correct formalization is true,
                 and vice versa.`}
         >
-            <Counterexample
-                description="Your formalization is true
-                    and the correct formalization is false,
-                    e.g., in structure"
-                structure={inputImpliesCorrect.counterexample}
-                index={1}
-                msgNotFound={`We could not automatically find a structure
-                    in which your formalization is true
-                    and the correct formalization is false.`}
-            />
-            <Counterexample
-                description="Your formalization is false
-                    and the correct formalization is true,
-                    e.g., in structure"
-                structure={correctImpliesInput.counterexample}
-                index={2}
-                msgNotFound={`We could not automatically find a structure
-                    in which your formalization is false
-                    and the correct formalization is true.`}
-            />
+            {
+                (inputImpliesCorrect.counterexample && !inputImpliesCorrect.counterexample.error)
+                ? <Counterexample
+                    description="In structure"
+                    structure={inputImpliesCorrect.counterexample}
+                    traceData={inputImpliesCorrect.traces}
+                    antecedentLabel={'Your'}
+                    consequentLabel={'The correct'}
+                    index={1}
+                    msgNotFound={`We could not automatically find a structure
+                                in which your formalization is true
+                                and the correct formalization is false.`}
+                    />
+                : <FailedStructureResult error={inputImpliesCorrect.counterexample?.error} />
+            }
+            {
+                (correctImpliesInput.counterexample && !correctImpliesInput.counterexample.error)
+                ? <Counterexample
+                    description="In structure"
+                    structure={correctImpliesInput.counterexample}
+                    traceData={correctImpliesInput.traces}
+                    antecedentLabel={'The correct'}
+                    consequentLabel={'Your'}
+                    index={2}
+                    msgNotFound={`We could not automatically find a structure
+                        in which your formalization is false
+                        and the correct formalization is true.`}
+                    />
+                    : <FailedStructureResult error={correctImpliesInput.counterexample?.error} />
+            }
         </IncorrectEvalResult>
     );
 }
